@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampusOne - One App for College</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f1f5f9;color:#1e293b;max-width:480px;margin:0 auto;min-height:100vh}
+header{background:#4f46e5;color:#fff;padding:20px;text-align:center}
+header h1{font-size:24px}
+header p{font-size:13px;opacity:.9;margin-top:4px}
+.filters{display:flex;gap:8px;padding:12px;justify-content:center;flex-wrap:wrap}
+.filters button{padding:8px 16px;border:2px solid #4f46e5;background:#fff;color:#4f46e5;border-radius:20px;cursor:pointer;font-weight:bold}
+.filters button.active{background:#4f46e5;color:#fff}
+.card{background:#fff;margin:10px 12px;padding:14px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.card h3{font-size:16px;margin-bottom:6px}
+.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:bold;margin-bottom:8px}
+.deadline{background:#fee2e2;color:#dc2626}
+.assignment{background:#fef3c7;color:#d97706}
+.notice{background:#dbeafe;color:#2563eb}
+.days{font-size:13px;color:#dc2626;font-weight:bold;margin-top:6px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;display:flex;border-top:1px solid #e2e8f0}
+nav button{flex:1;padding:14px;border:none;background:#fff;cursor:pointer;font-weight:bold;color:#64748b}
+nav button.active{color:#4f46e5;border-top:3px solid #4f46e5}
+.page{display:none;padding-bottom:80px}
+.page.active{display:block}
+#chatBox{padding:12px}
+.msg{margin:8px 0;padding:10px 14px;border-radius:12px;max-width:85%}
+.user{background:#4f46e5;color:#fff;margin-left:auto;text-align:right}
+.bot{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.inputRow{display:flex;gap:8px;padding:12px;position:fixed;bottom:60px;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#f1f5f9}
+.inputRow input{flex:1;padding:10px;border-radius:20px;border:1px solid #cbd5e1}
+.inputRow button{padding:10px 18px;background:#4f46e5;color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:bold}
+form.admin{padding:16px}
+form.admin input,form.admin select,form.admin textarea{width:100%;padding:10px;margin:8px 0;border:1px solid #cbd5e1;border-radius:8px}
+form.admin button{width:100%;padding:12px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+<h1>CampusOne</h1>
+<p>End WhatsApp chaos. All college info in one place.</p>
+</header>
+
+<div class="filters" id="courseFilter">
+<button class="active" onclick="setCourse('All',this)">All</button>
+<button onclick="setCourse('BCA',this)">BCA</button>
+<button onclick="setCourse('BBA',this)">BBA</button>
+<button onclick="setCourse('BTech',this)">BTech</button>
+</div>
+
+<!-- NOTICES PAGE -->
+<div id="p-notices" class="page active">
+<div id="noticeList"></div>
+</div>
+
+<!-- DEADLINES PAGE -->
+<div id="p-deadlines" class="page">
+<div id="deadlineList"></div>
+</div>
+
+<!-- AI PAGE -->
+<div id="p-ai" class="page">
+<div id="chatBox">
+<div class="msg bot">Hi! I am CampusOne Buddy. Ask me: fees, exam, assignment...</div>
+</div>
+<div class="inputRow">
+<input id="chatInput" placeholder="Ask about fees, exams...">
+<button onclick="askAI()">Ask</button>
+</div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div id="p-admin" class="page">
+<form class="admin" onsubmit="addNotice(event)">
+<h3>Add New Notice</h3>
+<input id="aTitle" placeholder="Title e.g. BCA Fees Last Date" required>
+<select id="aCourse"><option>BCA</option><option>BBA</option><option>BTech</option></select>
+<select id="aType"><option value="deadline">deadline</option><option value="assignment">assignment</option><option value="notice">notice</option></select>
+<input id="aDate" type="date" required>
+<textarea id="aDesc" placeholder="Description"></textarea>
+<button type="submit">Publish Notice</button>
+</form>
+</div>
+
+<nav>
+<button class="active" onclick="show('p-notices',this)">Notices</button>
+<button onclick="show('p-deadlines',this)">Deadlines</button>
+<button onclick="show('p-ai',this)">AI Buddy</button>
+<button onclick="show('p-admin',this)">Admin</button>
+</nav>
+
+<script>
+// SIMPLE DATA - easy to understand and edit
+let notices = [
+{id:1, title:"BCA Sem 2 Fees Last Date", course:"BCA", date:"2026-09-30", type:"deadline", desc:"Pay on college portal before 5pm."},
+{id:2, title:"BBA Assignment 3 Submit", course:"BBA", date:"2026-09-28", type:"assignment", desc:"Submit PDF on classroom."},
+{id:3, title:"BTech Mid Sem Exams", course:"BTech", date:"2026-10-10", type:"deadline", desc:"Date sheet on notice board."},
+{id:4, title:"College Fest Registration", course:"BCA", date:"2026-10-05", type:"notice", desc:"Register in student cell."},
+{id:5, title:"BBA Guest Lecture", course:"BBA", date:"2026-09-27", type:"notice", desc:"Marketing trends by industry expert."},
+{id:6, title:"BCA Lab Record Check", course:"BCA", date:"2026-09-29", type:"assignment", desc:"Bring completed records."}
+];
+let selectedCourse = "All";
+
+function setCourse(c, btn){
+selectedCourse = c;
+document.querySelectorAll("#courseFilter button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+render();
+}
+function daysLeft(d){
+let diff = Math.ceil((new Date(d) - new Date())/86400000);
+return diff < 0 ? "Overdue" : diff + " days left";
+}
+function render(){
+let list = notices.filter(n => selectedCourse==="All" || n.course===selectedCourse);
+let nl = document.getElementById("noticeList");
+nl.innerHTML = "";
+list.forEach(n=>{
+nl.innerHTML += `<div class="card"><span class="badge ${n.type}">${n.type.toUpperCase()} | ${n.course}</span><h3>${n.title}</h3><p style="font-size:13px;color:#64748b">${n.desc}</p><div class="days">${n.date} - ${daysLeft(n.date)}</div></div>`;
+});
+let dl = document.getElementById("deadlineList");
+dl.innerHTML = "";
+list.filter(n=>n.type!=="notice").sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(n=>{
+dl.innerHTML += `<div class="card"><span class="badge ${n.type}">${n.type.toUpperCase()} | ${n.course}</span><h3>${n.title}</h3><div class="days">${daysLeft(n.date)} - Due ${n.date}</div></div>`;
+});
+}
+function show(pid, btn){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(pid).classList.add("active");
+document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+}
+function askAI(){
+let inp = document.getElementById("chatInput");
+let q = inp.value.toLowerCase();
+if(!q) return;
+let box = document.getElementById("chatBox");
+box.innerHTML += `<div class="msg user">${inp.value}</div>`;
+let ans = "I found these for you:";
+let found = notices.filter(n => n.title.toLowerCase().includes(q) || n.type.includes(q) || n.course.toLowerCase()===q);
+if(found.length===0){
+if(q.includes("fee")) found = notices.filter(n=>n.title.toLowerCase().includes("fee"));
+else if(q.includes("exam")) found = notices.filter(n=>n.title.toLowerCase().includes("exam"));
+else ans = "Try asking: fees, exam, assignment, BCA, BBA, BTech";
+}
+found.forEach(n=>{ ans += `<br>- ${n.title} (${n.course}, ${n.date})`; });
+box.innerHTML += `<div class="msg bot">${ans}</div>`;
+inp.value = "";
+box.scrollTop = box.scrollHeight;
+}
+function addNotice(e){
+e.preventDefault();
+let t = document.getElementById("aTitle").value;
+let c = document.getElementById("aCourse").value;
+let ty = document.getElementById("aType").value;
+let d = document.getElementById("aDate").value;
+let de = document.getElementById("aDesc").value;
+notices.unshift({id:Date.now(), title:t, course:c, date:d, type:ty, desc:de});
+render();
+alert("Notice published!");
+e.target.reset();
+}
+render();
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
